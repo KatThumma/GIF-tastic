@@ -1,54 +1,61 @@
-var topics=["pizza","donuts","tacos"];
+$(function(){
+    populateButtons(searchArray,'searchButton','#buttonsArea');
+    console.log("page loaded");
+})
 
-function displayGifs(){
-    var snackName= $(this).attr("data-nom");
-    var queryURL= "http://api.giphy.com/v1/gifs/search?q=" + snackName + "&api_key=4fSNaZT454kRTbS8rBtI9FY9n0wthuSr" + "limit=10";
-    
-    $.ajax({
-        url: queryURL,
-        method: "GET"
-    }).then(function(response){
-        
-       var snackDiv = $("#snacks");
+var searchArray = ['pizza','donuts','tacos'];
 
-       var gifURL = response.original_still;
-       var stillGIF = $("<img>").attr("src",gifURL);
-       snackDiv.append(stillGIF);
-    });
-}
-
-$("#addSnack").on("click",function(event){
-
-    event.preventDefault();
-
-    var newSnack = ("#snack-input").val().trim();
-
-    topics.push(newSnack);
-
-    renderButtons();
-});
-
-$(document).on("cilck",".button-style", displayGifs);
-
-renderButtons();
-
-function renderButtons(){
-
-    $("#snack-buttons").empty();
-
-    for(i= 0;i<topics.length; i++){
-
-    var butt = $("<button>");
-
-    butt.addClass("button-style");
-
-    butt.attr("data-nom", topics[i]);
-
-    butt.text(topics[i]);
-
-    $("#snack-buttons").append(butt);
+function populateButtons(searchArray,classToAdd,areaToAddTo){
+    $(areaToAddTo).empty();
+    for(var i=0;i<searchArray.length;i++){
+        var a = $('<button>');
+        a.addClass(classToAdd);
+        a.attr('data-type',searchArray[i]);
+        a.text(searchArray[i]);
+        $(areaToAddTo).append(a);
     }
-
 }
-renderButtons();
+
+$(document).on('click','.searchButton',function(){
+    var type = $(this).data('type');
+    var queryURL = 'http://api.giphy.com/v1/gifs/search?q='+type+'&api_key=4fSNaZT454kRTbS8rBtI9FY9n0wthuSr&limit=10'
+    $.ajax({url:queryURL,method:'GET'})
+    .done(function(response){
+       for(var i=0;i<response.data.length;i++){
+           var searchDiv = $('<div class="search-item">');
+           var rating = response.data[i].rating;
+           var p = $('<p>').text('Rating: '+rating);
+           var animated = response.data[i].images.fixed_height.url;
+           var still = response.data[i].images.fixed_height_still.url;
+           var image = $('<img>');
+           image.attr('src',still);
+           image.attr('data-still',still);
+           image.attr('data-animated',animated);
+           image.attr('data-state','still');
+           image.addClass('searchImage');
+           searchDiv.append(p);
+           searchDiv.append(image);
+           $('#searches').append(searchDiv);
+       }
+    })
+})
+
+$(document).on('click','.searchImage',function(){
+    var state =$(this).attr('data-state');
+    if(state == 'still'){
+        $(this).attr('src',$(this).data('animated'));
+        $(this).attr('data-state','animated');
+    } else {
+        $(this).attr('src',$(this).data('still'));
+        $(this).attr('data-state','still');
+    }
+})
+
+$('#addSearch').on('click',function(){
+    var newSearch = $('input').eq(0).val();
+    searchArray.push(newSearch);
+    populateButtons(searchArray,'searchButton','#buttonsArea');
+    return false;
+})
+
 
